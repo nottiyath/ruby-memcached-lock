@@ -1,0 +1,44 @@
+###########################################################################################################
+#
+# :Author=>"madhusoodhanan nottiyath", :email=>"nottiyath@gmail.com"
+# Feel free to contact me with your comments and suggestions
+#
+###########################################################################################################
+#
+#Description:
+#
+#This is a memcached client wrapper which reads and writes into memcache using locks and thus resolving race conditions.
+#The keys can be stored either (a) as it is or (b) as encrypted key. The keys are encrypted in crc32.
+#crc32 encryption is much faster than other encryptions. Almost 2000 calls per millisecond
+#
+###########################################################################################################
+#
+#For those who are interested in how I have benchmarked the encryption performance, here is my test:
+# require "mem_cached_lock"
+# require 'benchmark'
+# mem_cached_obj      = Dalli::Client.new('localhost:11211')
+# mem_cached_lock_obj = MemCachedLock.new(mem_cached_obj)
+# key                 = "some_key_you_want_to_encrypt_and_test_Its_a_good_idea_to_encrypt_long_keys"
+# Benchmark.measure{1000000.times{mem_cached_lock_obj.encrypt_crc32(key)}}.total
+#
+###########################################################################################################
+#
+#usage :
+# require "mem_cached_lock"
+# mem_cached_obj      = Dalli::Client.new('localhost:11211')
+# mem_cached_lock_obj = MemCachedLock.new(mem_cached_obj )
+# mem_cached_lock_obj.lock_and_set(key,val,true,expiry,raw) - encrypts and stores the key
+# mem_cached_lock_obj.lock_and_set(key,val,false,expiry,raw) - stores key without encryption
+# mem_cached_lock_obj.lock_and_get(key,true) - reading values from encrypted key
+# mem_cached_lock_obj.lock_and_get(key,false)- reading values from unencrypted key
+#
+# public methods
+# mem_cached_lock_obj.add_lock(key,encrypt_flag)
+# mem_cached_lock_obj.delete_lock(key,encrypt_flag)
+# mem_cached_lock_obj.lock_and_get(key,encrypt_flag)
+# mem_cached_lock_obj.lock_get_and_delete(key,encrypt_flag)
+# mem_cached_lock_obj.lock_and_set(key,val,encrypt_flag,expiry,raw)
+# mem_cached_lock_obj.lock_and_append(key,val,delim,encrypt_flag,expiry,raw)
+# mem_cached_lock_obj.lock_and_remove_value(key,remove_val,delim,encrypt_flag,expiry,raw)
+#
+###########################################################################################################
