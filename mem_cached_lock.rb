@@ -2,30 +2,30 @@ require 'dalli'
 require 'zlib'
 
 class MemCachedLock
-###########################################################################################################
+#############################################################################################
 #
 # :Author=>"madhusoodhanan nottiyath", :email=>"nottiyath@gmail.com"
 # Feel free to contact me with your comments and suggestions
 #
-###########################################################################################################
+#############################################################################################
 #
 #Description:
 #
-#This is a memcached client wrapper which reads and writes into memcache using locks and thus resolving race conditions.
-#The keys can be stored either (a) as it is or (b) as encrypted key. The keys are encrypted in crc32.
-#crc32 encryption is much faster than other encryptions. Almost 2000 calls per millisecond
+#This is a memcached client wrapper which reads and writes into memcache using locks and thus 
+#resolving race conditions. The keys can be stored either (a) as it is or (b) as encrypted key.
+#Keys are encrypted in crc32. crc32 encryption is much faster than other encryptions.(2000 calls per ms)
 #
-###########################################################################################################
+#############################################################################################
 #
-#For those who are interested in how I have benchmarked the encryption performance, here is my test:
+#For those who are interested, here is how I have benchmarked the encryption performance:
 # require "mem_cached_lock"
 # require 'benchmark'
 # mem_cached_obj      = Dalli::Client.new('localhost:11211')
 # mem_cached_lock_obj = MemCachedLock.new(mem_cached_obj)
-# key                 = "some_key_you_want_to_encrypt_and_test_Its_a_good_idea_to_encrypt_long_keys"
+# key = "some_key_you_want_to_encrypt_and_test_Its_a_good_idea_to_encrypt_long_keys"
 # Benchmark.measure{1000000.times{mem_cached_lock_obj.encrypt_crc32(key)}}.total
 #
-###########################################################################################################
+#############################################################################################
 #
 #usage :
 # require "mem_cached_lock"
@@ -45,7 +45,7 @@ class MemCachedLock
 # mem_cached_lock_obj.lock_and_append(key,val,delim,encrypt_flag,expiry,raw)
 # mem_cached_lock_obj.lock_and_remove_value(key,remove_val,delim,encrypt_flag,expiry,raw)
 #
-###########################################################################################################
+#############################################################################################
 
   #MemCacheLock initializer.
   def initialize(memcached_object)
@@ -53,7 +53,9 @@ class MemCachedLock
     @memcached_object = memcached_object
     #sleep time while obataining locks
     @wait_time        = 0.020 #20 milliseconds
-    @max_lock_tries = 25 #number of retries for obtaining lock. maximum lock retry time is 500 ms (25 x 20ms). feel free to tweek both the values as per your needs
+    #number of retries for obtaining lock. maximum lock retry time is 500 ms (25 x 20ms). 
+    #feel free to tweek both the values as per your needs
+    @max_lock_tries = 25
     @default_expiry   = 3600 #1 hour
   end
 
