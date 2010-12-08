@@ -3,12 +3,6 @@ require 'zlib'
 
 class MemCachedLock
 #############################################################################################
-#
-# :Author=>"madhusoodhanan nottiyath", :email=>"nottiyath@gmail.com"
-# Feel free to contact me with your comments and suggestions
-#
-#############################################################################################
-#
 #Description:
 #
 #This is a memcached client wrapper which reads and writes into memcache using locks and thus 
@@ -16,37 +10,6 @@ class MemCachedLock
 #Keys are encrypted in crc32. crc32 encryption is much faster than other encryptions.(2000 calls per ms)
 #
 #############################################################################################
-#
-#For those who are interested, here is how I have benchmarked the encryption performance:
-# require "mem_cached_lock"
-# require 'benchmark'
-# mem_cached_obj      = Dalli::Client.new('localhost:11211')
-# mem_cached_lock_obj = MemCachedLock.new(mem_cached_obj)
-# key = "some_key_you_want_to_encrypt_and_test_Its_a_good_idea_to_encrypt_long_keys"
-# Benchmark.measure{1000000.times{mem_cached_lock_obj.encrypt_crc32(key)}}.total
-#
-#############################################################################################
-#
-#usage :
-# require "mem_cached_lock"
-# mem_cached_obj      = Dalli::Client.new('localhost:11211')
-# mem_cached_lock_obj = MemCachedLock.new(mem_cached_obj )
-# mem_cached_lock_obj.lock_and_set(key,val,true,expiry,raw) - encrypts and stores the key
-# mem_cached_lock_obj.lock_and_set(key,val,false,expiry,raw) - stores key without encryption
-# mem_cached_lock_obj.lock_and_get(key,true) - reading values from encrypted key
-# mem_cached_lock_obj.lock_and_get(key,false)- reading values from unencrypted key
-#
-# public methods
-# mem_cached_lock_obj.add_lock(key,encrypt_flag)
-# mem_cached_lock_obj.delete_lock(key,encrypt_flag)
-# mem_cached_lock_obj.lock_and_get(key,encrypt_flag)
-# mem_cached_lock_obj.lock_get_and_delete(key,encrypt_flag)
-# mem_cached_lock_obj.lock_and_set(key,val,encrypt_flag,expiry,raw)
-# mem_cached_lock_obj.lock_and_append(key,val,delim,encrypt_flag,expiry,raw)
-# mem_cached_lock_obj.lock_and_remove_value(key,remove_val,delim,encrypt_flag,expiry,raw)
-#
-#############################################################################################
-
   #MemCacheLock initializer.
   def initialize(memcached_object)
    #memcached client object is passed as a parameter
@@ -106,8 +69,7 @@ class MemCachedLock
   end
 
   def lock_and_get(key,encrypt_flag=false)
-    lock = add_lock(key,encrypt_flag)
-    if lock
+    if  add_lock(key,encrypt_flag)
       ret_val = get(key,encrypt_flag)
       delete_lock(key,encrypt_flag) #delete the lock
     end
@@ -115,8 +77,7 @@ class MemCachedLock
   end
 
   def lock_get_and_delete(key,encrypt_flag=false)
-    lock = add_lock(key,encrypt_flag)
-    if lock
+    if add_lock(key,encrypt_flag)
       ret_val = get(key,encrypt_flag)
       delete(key,encrypt_flag) if ret_val #delete the key
       delete_lock(key,encrypt_flag) #delete the lock
@@ -124,8 +85,7 @@ class MemCachedLock
     ret_val || nil
   end
   def lock_and_set(key,val,encrypt_flag=false,expiry=@default_expiry,raw=false)
-    lock = add_lock(key,encrypt_flag)
-    if lock
+    if add_lock(key,encrypt_flag)
       set(key,val,encrypt_flag,expiry,raw)
       delete_lock(key,encrypt_flag) #remove the lock
       return true
@@ -134,8 +94,7 @@ class MemCachedLock
   end
 
   def lock_and_append(key,val,delim,encrypt_flag=false,expiry=@default_expiry,raw=false)
-    lock = add_lock(key,encrypt_flag)
-    if lock
+    if add_lock(key,encrypt_flag)
       old_val = get(key,encrypt_flag) #this will be either nil or the actual value
       set(key,"#{old_val}#{delim}#{val}",encrypt_flag,expiry,raw)
       delete_lock(key,encrypt_flag) #remove the lock
@@ -148,8 +107,7 @@ class MemCachedLock
   #1) remove "abc" from "xyz,1243,abc,aaa,xxx"
   #2) remove "abc" from "abc" - in this case the key also will be removed
   def lock_and_remove_value(key,remove_val,delim,encrypt_flag=false,expiry=@default_expiry,raw=false)
-    lock = add_lock(key,encrypt_flag)
-    if lock
+    if add_lock(key,encrypt_flag)
       if old_val = get(key,encrypt_flag)
         new_val = old_val.split(delim)
         new_val.delete(remove_val) if remove_val
